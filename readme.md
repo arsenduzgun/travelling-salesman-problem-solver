@@ -35,7 +35,7 @@ The application accepts either a .tsp or .txt file with the following structure:
 
 ![Example File](./readme-images/appropriate_content.png)
 
-## 4. Algorithm Implemented
+## 5. Algorithm Implemented
 ### Enhanced Nearest Neighbour Algorithm
 **Definition**: The Nearest Neighbour algorithm selects a starting location and iteratively visits the closest unvisited location until all locations are visited, finally returning to the start. This enhanced version improves upon the basic Nearest Neighbour approach by incorporating optimisations that reduce the total path length compared to the standard implementation.
 
@@ -48,6 +48,6 @@ The application accepts either a .tsp or .txt file with the following structure:
 ![Path Visualisation](./readme-images/path.png)
 Check output.txt for the detailed order of locations computed by the algorithm.
 
-## 5. Conclusion
+## 6. Conclusion
 This project demonstrates an efficient solution for the TSP using an enhanced Nearest Neighbour algorithm. The enhanced Nearest Neighbour algorithm provides a balance of speed and accuracy, making it practical for large datasets such as the UY734 instance. Future improvements could explore additional optimisation techniques, such as 2-opt or simulated annealing, to further improve the solution's accuracy.
 
