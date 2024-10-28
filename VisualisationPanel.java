@@ -21,7 +21,7 @@ public class VisualisationPanel extends JPanel {
     
     @Override
     public void paint(Graphics g) {
-    	if(visualisationType.equals("Locations(" + AppInterface.fileName + ")")) {
+    	if(visualisationType.equals("Locations - " + AppInterface.fileName)) {
     		int gapForOval = gapBetweenPanelAndVisualisation - 1;
     		int xCoordinate;
     		int yCoordinate;
@@ -31,7 +31,7 @@ public class VisualisationPanel extends JPanel {
         		g.fillOval(xCoordinate + gapForOval, yCoordinate + gapForOval, 2, 2);
         	}
     	}
-    	else if(visualisationType.equals("Path(" + AppInterface.fileName + ")(" + AppInterface.selectedMethod + ")")) {
+    	else if(visualisationType.equals("Path - " + AppInterface.fileName)) {
     		int xCoordOfFirstLocation;
     		int yCoordOfFirstLocation;
     		int xCoordOfSecondLocation;

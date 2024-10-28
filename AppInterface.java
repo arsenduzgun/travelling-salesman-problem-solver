@@ -24,7 +24,6 @@ public class AppInterface extends JFrame implements Runnable, ActionListener {
     protected JTextArea output;
     protected String filePath;
     protected static String fileName;
-    protected static String selectedMethod;
     protected Thread thread;
     protected Timer timer;
     protected float totalDistance;
@@ -63,43 +62,8 @@ public class AppInterface extends JFrame implements Runnable, ActionListener {
         selectedFileArea.setEditable(false);
         selectedFileArea.setBounds(320, 53, 170, 19);
         add(selectedFileArea);
-        String NOT_SELECTABLE_OPTION = " - Select a method - ";
-        String[] NORMAL_OPTION = {"Nearest Neighbour Algorithm", "Greedy Algorithm", "Divide and Conquer Algorithm"};
-        JComboBox<String> methodList = new JComboBox<String>();
-
-        methodList.setModel(new DefaultComboBoxModel<String>() {
-            boolean selectionAllowed = true;
-            @Override
-            public void setSelectedItem(Object object) {
-                if (!NOT_SELECTABLE_OPTION.equals(object)) {
-                    super.setSelectedItem(object);
-                }
-                else if (selectionAllowed) {
-                    selectionAllowed = false;
-                    super.setSelectedItem(object);
-                }
-            }
-        });
-
-        methodList.addItem(NOT_SELECTABLE_OPTION);
-        for(int i = 0; i < NORMAL_OPTION.length; i++){
-            methodList.addItem(NORMAL_OPTION[i]);
-        }
-
-        ItemListener itemListener = new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                selectedMethod = methodList.getSelectedItem().toString();
-            }
-        };
-
-        methodList.addItemListener(itemListener);
-        JPanel comboBoxPanel = new JPanel();
-        comboBoxPanel.setBounds(165, 140, 200, 30);
-        comboBoxPanel.add(methodList);
-        add(comboBoxPanel);
         findPathButton = new JButton("Find Path");
-        findPathButton.setBounds(200, 240, 128, 24);
+        findPathButton.setBounds(200, 200, 128, 24);
         findPathButton.addActionListener(this);
         add(findPathButton);
         output = new JTextArea();
@@ -121,10 +85,6 @@ public class AppInterface extends JFrame implements Runnable, ActionListener {
         return false;
     }
 
-    public boolean isMethodSelected(){
-        return (selectedMethod != null);
-    }
-
     public void analysisStarted() {
     	searchFileButton.setEnabled(false);
     	findPathButton.setText("Stop Processing");
@@ -144,7 +104,6 @@ public class AppInterface extends JFrame implements Runnable, ActionListener {
     public void printOutput() {
     	output.append("File name: " + fileName +
  		       		  "\n\n" + "Number of locations: " + locationArray.length +
- 		       		  "\n\n" + "Algorithm used: " + selectedMethod +
  		       		  "\n\n" + "Total length of the path: " + totalDistance +
  		       		  "\n\n" + "Elapsed time: " + elapsedTime + " milliseconds" +
  		       		  "\n\n" + "Location order of the shortest path found: ");
@@ -163,10 +122,10 @@ public class AppInterface extends JFrame implements Runnable, ActionListener {
 			    							  fileReader.yCoordinateMinValue,
 			    							  fileReader.xCoordMaxDistBetweenLocations,
 			    							  fileReader.yCoordMaxDistBetweenLocations,
-			    							  "Locations(" + fileName + ")",
+			    							  "Locations - " + fileName,
 			    							  locationArray);
     	new VisualisationFrame(visualisationPack);
-    	visualisationPack.visualisationType = "Path(" + fileName + ")(" + selectedMethod + ")";
+    	visualisationPack.visualisationType = "Path - " + fileName;
     	new VisualisationFrame(visualisationPack);
     }
 
@@ -210,19 +169,15 @@ public class AppInterface extends JFrame implements Runnable, ActionListener {
             }
         } else if (e.getSource() == findPathButton) {
             if (isFilePathExist()) {
-                if (isMethodSelected()) {
-                    if (!(thread == null) && thread.isAlive()) {
-                        timer.stop();
-                        thread.stop();
-                        findPathButton.setText("Find Path");
-                        searchFileButton.setEnabled(true);
-                        output.setText("");
-                    } else {
-                        thread = new Thread(this);
-                        thread.start();
-                    }
+                if (!(thread == null) && thread.isAlive()) {
+                    timer.stop();
+                    thread.stop();
+                    findPathButton.setText("Find Path");
+                    searchFileButton.setEnabled(true);
+                    output.setText("");
                 } else {
-                    JOptionPane.showMessageDialog(this, "Please select a method.");
+                    thread = new Thread(this);
+                    thread.start();
                 }
             } else {
                 JOptionPane.showMessageDialog(this, "Please select a file.");
@@ -237,21 +192,9 @@ public class AppInterface extends JFrame implements Runnable, ActionListener {
         fileReader = new FileReader(filePath);
         locationArray = fileReader.locationArray;
         start = System.currentTimeMillis();
-        if(selectedMethod.equals("Nearest Neighbour Algorithm")) {
-        	NearestNeighbour nearestNeighbour = new NearestNeighbour(locationArray);
-        	locationArray = nearestNeighbour.locationArray;
-        	totalDistance = nearestNeighbour.totalDistance;
-        }
-        else if(selectedMethod.equals("Greedy Algorithm")) {
-        	Greedy greedy = new Greedy(locationArray);
-        	locationArray = greedy.locationArray;
-        	totalDistance = greedy.totalDistance;
-        }
-        else {
-        	DivideAndConquer divideAndConquer = new DivideAndConquer(locationArray);
-        	locationArray = divideAndConquer.locationArray;
-        	totalDistance = divideAndConquer.totalDistance;
-        }
+        EnhancedNearestNeighbour enhancedNearestNeighbour = new EnhancedNearestNeighbour(locationArray);
+        locationArray = enhancedNearestNeighbour.locationArray;
+        totalDistance = enhancedNearestNeighbour.totalDistance;
         elapsedTime = System.currentTimeMillis() - start;
         analysisFinished();
     }
