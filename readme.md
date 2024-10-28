@@ -21,6 +21,20 @@ The user interface includes the following features:
 - **Order of Locations**: Displayed in the text box and saved as a .txt file.
 - **Graphical Visualisation of Path**: The computed path is displayed in a separate window, showing the approximate shortest route.
 - **All Locations View**: A separate window shows all the locations from the provided file.
+
+
+## 4. Input File Format
+The application accepts either a .tsp or .txt file with the following structure:
+
+- Each line represents a location.
+- Each line should contain three elements, separated by a single space:
+- **Location ID**: A unique identifier for each location. This can be a string (e.g., A1, B2) or a number (e.g., 1, 2).
+- **X Coordinate**: The x-coordinate of the location.
+- **Y Coordinate**: The y-coordinate of the location.
+### Example file content:
+
+![Example File](./readme-images/appropriate_content.png)
+
 ## 4. Algorithm Implemented
 ### Enhanced Nearest Neighbour Algorithm
 **Definition**: The Nearest Neighbour algorithm selects a starting location and iteratively visits the closest unvisited location until all locations are visited, finally returning to the start. This enhanced version improves upon the basic Nearest Neighbour approach by incorporating optimisations that reduce the total path length compared to the standard implementation.

@@ -3,6 +3,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.Scanner;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.Timer;
 import javax.swing.UIManager;
@@ -73,7 +76,7 @@ public class AppInterface extends JFrame implements Runnable, ActionListener {
         add(outputScrollPane);
     }
 
-    public boolean isFilePathExist(){
+    public boolean doesFilePathExist(){
         return (filePath != null);
     }
 
@@ -168,16 +171,51 @@ public class AppInterface extends JFrame implements Runnable, ActionListener {
                 }
             }
         } else if (e.getSource() == findPathButton) {
-            if (isFilePathExist()) {
-                if (!(thread == null) && thread.isAlive()) {
-                    timer.stop();
-                    thread.stop();
-                    findPathButton.setText("Find Path");
-                    searchFileButton.setEnabled(true);
-                    output.setText("");
+            if (doesFilePathExist()) {
+                boolean appropriateContent = true;
+                Scanner scanner;
+                try{
+                    scanner = new Scanner(new File(filePath));
+                    int size = 0;
+                    while(scanner.hasNextLine()){
+                        String line = scanner.nextLine();
+                        String lineParsed[] = line.split(" ");
+                        if (lineParsed.length != 3) {
+                            appropriateContent = false;
+                            break;
+                        }
+                        try{
+                            float xCoordinate = Float.parseFloat(lineParsed[1]);
+                            float yCoordinate = Float.parseFloat(lineParsed[2]);
+                        } catch (NumberFormatException ex) {
+                            appropriateContent = false;
+                            break;
+                        }
+
+                        size++;
+                    }
+                    if (size < 2){
+                        appropriateContent = false;
+                    }
+                } catch (FileNotFoundException ex) {
+
+                }
+
+
+
+                if (appropriateContent) {
+                    if (!(thread == null) && thread.isAlive()) {
+                        timer.stop();
+                        thread.stop();
+                        findPathButton.setText("Find Path");
+                        searchFileButton.setEnabled(true);
+                        output.setText("");
+                    } else {
+                        thread = new Thread(this);
+                        thread.start();
+                    }
                 } else {
-                    thread = new Thread(this);
-                    thread.start();
+                    JOptionPane.showMessageDialog(this, "File content is not appropriate.");
                 }
             } else {
                 JOptionPane.showMessageDialog(this, "Please select a file.");
