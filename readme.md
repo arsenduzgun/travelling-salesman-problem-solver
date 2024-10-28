@@ -23,10 +23,11 @@ The user interface includes the following features:
 - **All Locations View**: A separate window shows all the locations from the provided file.
 ## 4. Algorithm Implemented
 ### Enhanced Nearest Neighbour Algorithm
-Definition: The Nearest Neighbour algorithm selects a starting location and iteratively visits the closest unvisited location until all locations are visited, finally returning to the start. This enhanced version improves upon the basic Nearest Neighbour approach by incorporating optimizations that reduce the total path length compared to the standard implementation.
+**Definition**: The Nearest Neighbour algorithm selects a starting location and iteratively visits the closest unvisited location until all locations are visited, finally returning to the start. This enhanced version improves upon the basic Nearest Neighbour approach by incorporating optimizations that reduce the total path length compared to the standard implementation.
 
-Accuracy: This enhanced Nearest Neighbour algorithm achieved a path length of 87,962.81, which is approximately 11.2% longer than the optimal path but significantly shorter than the paths produced by basic heuristic algorithms.
-Speed: The algorithm completed the calculation in 442 milliseconds.
+**Accuracy**: This enhanced Nearest Neighbour algorithm achieved a path length of 87,962.81, which is approximately 11.2% longer than the optimal path but significantly shorter than the paths produced by basic heuristic algorithms.
+
+**Speed**: The algorithm completed the calculation in 442 milliseconds.
 
 ![Locations Visualization](./readme-images/locations.png)
 
@@ -34,8 +35,5 @@ Speed: The algorithm completed the calculation in 442 milliseconds.
 Check output.txt for the detailed order of locations computed by the algorithm.
 
 ## 5. Conclusion
-This project demonstrates an efficient solution for the TSP using an enhanced Nearest Neighbour algorithm:
-
-The enhanced Nearest Neighbour algorithm provides a balance of speed and accuracy, making it practical for large datasets such as the UY734 instance.
-Future improvements could explore additional optimization techniques, such as 2-opt or simulated annealing, to further improve the solution's accuracy.
+This project demonstrates an efficient solution for the TSP using an enhanced Nearest Neighbour algorithm. The enhanced Nearest Neighbour algorithm provides a balance of speed and accuracy, making it practical for large datasets such as the UY734 instance. Future improvements could explore additional optimization techniques, such as 2-opt or simulated annealing, to further improve the solution's accuracy.
 
