@@ -10,17 +10,17 @@ The optimal solution for this dataset has a known total path length of 79,114, a
 ## 3. User Interaction
 The user interface includes the following features:
 
-File Selection: Users can upload a .tsp file containing the locations.
-Find Path: After selecting the file, users can click the 'Find Path' button to run the enhanced Nearest Neighbour algorithm and view the results.
-Text Box Output: A text box displays the order of locations in the computed path, saved in a .txt file.
+- **File Selection**: Users can upload a .tsp or .txt file containing the locations.
+- **Find Path**: After selecting the file, users can click the 'Find Path' button to run the enhanced Nearest Neighbour algorithm and view the results.
+- **Text Box Output**: A text box displays the order of locations in the computed path, saved in a .txt file.
 ### UI of the Application:
 
 ![Application UI](./readme-images/ui.png)
 ### The application outputs:
 
-Order of Locations: Displayed in the text box and saved as a .txt file (see the example in output.txt)​(output).
-Graphical Visualization of Path: The computed path is displayed in a separate window, showing the approximate shortest route.
-All Locations View: A separate window shows all the locations from the provided file.
+- **Order of Locations**: Displayed in the text box and saved as a .txt file.
+- **Graphical Visualization of Path**: The computed path is displayed in a separate window, showing the approximate shortest route.
+- **All Locations View**: A separate window shows all the locations from the provided file.
 ## 4. Algorithm Implemented
 ### Enhanced Nearest Neighbour Algorithm
 Definition: The Nearest Neighbour algorithm selects a starting location and iteratively visits the closest unvisited location until all locations are visited, finally returning to the start. This enhanced version improves upon the basic Nearest Neighbour approach by incorporating optimizations that reduce the total path length compared to the standard implementation.
