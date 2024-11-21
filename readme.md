@@ -20,7 +20,6 @@ The user interface includes the following features:
 
 - **Order of Locations**: Displayed in the text box and saved as a .txt file.
 - **Graphical Visualisation of Path**: The computed path is displayed in a separate window, showing the approximate shortest route.
-- **All Locations View**: A separate window shows all the locations from the provided file.
 
 
 ## 4. Input File Format
@@ -42,8 +41,6 @@ The application accepts either a .tsp or .txt file with the following structure:
 **Accuracy**: This enhanced Nearest Neighbour algorithm achieved a path length of 87,962.81, which is approximately 11.2% longer than the optimal path but significantly shorter than the paths produced by basic heuristic algorithms.
 
 **Speed**: The algorithm completed the calculation in 442 milliseconds.
-
-![Locations Visualisation](./readme-images/locations.png)
 
 ![Path Visualisation](./readme-images/path.png)
 Check output.txt for the detailed order of locations computed by the algorithm.

@@ -12,7 +12,7 @@ public class VisualisationFrame extends JFrame {
 	protected int xAxisFrameLength;
 	protected int yAxisFrameLength;
 	VisualisationFrame(VisualisationPack visualisationPack){
-        super(visualisationPack.visualisationType);
+        super(visualisationPack.title);
         this.gapBetweenFrameAndPanel = visualisationPack.gapBetweenFrameAndPanel;
         this.gapBetweenPanelAndVisualisation = visualisationPack.gapBetweenPanelAndVisualisation;
         this.xAxisPanelLength = visualisationPack.xAxisPanelLength;

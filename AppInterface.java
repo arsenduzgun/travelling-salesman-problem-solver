@@ -19,6 +19,10 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.FocusTraversalPolicy;
+
 
 public class AppInterface extends JFrame implements Runnable, ActionListener {
     protected JButton searchFileButton;
@@ -51,6 +55,33 @@ public class AppInterface extends JFrame implements Runnable, ActionListener {
         setup();
         setTimer();
         setVisible(true);
+        setFocusTraversalPolicy(new FocusTraversalPolicy() {
+            @Override
+            public Component getComponentAfter(Container focusCycleRoot, Component aComponent) {
+                return null; // Prevents focus traversal
+            }
+
+            @Override
+            public Component getComponentBefore(Container focusCycleRoot, Component aComponent) {
+                return null; // Prevents focus traversal
+            }
+
+            @Override
+            public Component getFirstComponent(Container focusCycleRoot) {
+                return null; // No initial focus
+            }
+
+            @Override
+            public Component getLastComponent(Container focusCycleRoot) {
+                return null; // No initial focus
+            }
+
+            @Override
+            public Component getDefaultComponent(Container focusCycleRoot) {
+                return null; // No default component
+            }
+        });
+
     }
 
     public void setup(){
@@ -74,6 +105,8 @@ public class AppInterface extends JFrame implements Runnable, ActionListener {
         JScrollPane outputScrollPane = new JScrollPane(output);
         outputScrollPane.setBounds(0, 300, 537, 164);
         add(outputScrollPane);
+        getRootPane().requestFocusInWindow();
+
     }
 
     public boolean doesFilePathExist(){
@@ -125,10 +158,8 @@ public class AppInterface extends JFrame implements Runnable, ActionListener {
 			    							  fileReader.yCoordinateMinValue,
 			    							  fileReader.xCoordMaxDistBetweenLocations,
 			    							  fileReader.yCoordMaxDistBetweenLocations,
-			    							  "Locations - " + fileName,
+			    							  "Path - " + fileName,
 			    							  locationArray);
-    	new VisualisationFrame(visualisationPack);
-    	visualisationPack.visualisationType = "Path - " + fileName;
     	new VisualisationFrame(visualisationPack);
     }
 

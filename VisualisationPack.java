@@ -14,16 +14,16 @@ public class VisualisationPack{
 	protected int xAxisFrameLength;
 	protected int yAxisFrameLength;
 	protected float resizingValue;
-	protected String visualisationType;
+	protected String title;
 	protected Location[] locationArray;
 	VisualisationPack(float xCoordinateMinValue, float yCoordinateMinValue,
 	float xCoordMaxDistBetweenLocations, float yCoordMaxDistBetweenLocations,
-	String visualisationType, Location[] locationArray){
+	String title, Location[] locationArray){
 		this.xCoordinateMinValue = xCoordinateMinValue;
 		this.yCoordinateMinValue = yCoordinateMinValue;
 		this.xCoordMaxDistBetweenLocations = xCoordMaxDistBetweenLocations;
 		this.yCoordMaxDistBetweenLocations = yCoordMaxDistBetweenLocations;
-		this.visualisationType = visualisationType;
+		this.title = title;
 		this.locationArray = locationArray;
 		visualisationSizeCalculator();
 		calculateResizingValue();
