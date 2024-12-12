@@ -35,7 +35,7 @@ The application accepts either a .tsp or .txt file with the following structure:
 - Each line should contain three elements, separated by a single space:
 - **Location ID**: A unique identifier for each location. This can be a string (e.g., A1, B2) or a number (e.g., 1, 2).
 - **X Coordinate**: The x-coordinate of the location.
-- **Y Coordinate**: The y-coordinate of the location
+- **Y Coordinate**: The y-coordinate of the location.
 
 ### Example file content:
 
