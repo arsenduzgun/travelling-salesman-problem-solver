@@ -3,8 +3,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.Scanner;
 
 public class AppInterface extends JFrame implements Runnable, ActionListener {
     private static final int FRAME_WIDTH = 550;
@@ -79,12 +77,15 @@ public class AppInterface extends JFrame implements Runnable, ActionListener {
     }
 
     private void setupTimer() {
-        timer = new Timer(500, e -> {
-            if (processing.length() == 14) {
-                processing = processing.substring(0, 10);
+        timer = new Timer(500, new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (processing.length() == 14) {
+                    processing = processing.substring(0, 10);
+                }
+                output.setText(processing);
+                processing += ".";
             }
-            output.setText(processing);
-            processing += ".";
         });
     }
 
