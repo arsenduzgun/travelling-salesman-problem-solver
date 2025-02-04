@@ -1,59 +1,62 @@
-
-
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class FileReader {
     protected Location[] locationArray;
-    protected float xCoordinateMinValue;
-    protected float yCoordinateMinValue;
+    protected float xCoordinateMinValue = Float.MAX_VALUE;
+    protected float yCoordinateMinValue = Float.MAX_VALUE;
+    protected float xCoordinateMaxValue = Float.MIN_VALUE;
+    protected float yCoordinateMaxValue = Float.MIN_VALUE;
     protected float xCoordMaxDistBetweenLocations;
     protected float yCoordMaxDistBetweenLocations;
-    FileReader(String filePath){
+
+    public FileReader(String filePath) {
         readFile(filePath);
     }
-    public void readFile(String filePath){
-        Scanner scanner;
-        try{
-            scanner = new Scanner(new File(filePath));
-            int size = 0;
-            while(scanner.hasNextLine()){
-                scanner.nextLine();
-                size++;
+
+    private void readFile(String filePath) {
+        List<Location> locations = new ArrayList<>();
+
+        try (Scanner scanner = new Scanner(new File(filePath))) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine().trim();
+                if (line.isEmpty()) continue; // Skip empty lines
+
+                String[] lineParsed = line.split("\\s+"); // Handle multiple spaces
+                if (lineParsed.length < 3) {
+                    System.err.println("Skipping malformed line: " + line);
+                    continue;
+                }
+
+                try {
+                    String locationName = lineParsed[0];
+                    float xCoordinate = Float.parseFloat(lineParsed[1]);
+                    float yCoordinate = Float.parseFloat(lineParsed[2]);
+
+                    // Update min/max values
+                    xCoordinateMinValue = Math.min(xCoordinateMinValue, xCoordinate);
+                    xCoordinateMaxValue = Math.max(xCoordinateMaxValue, xCoordinate);
+                    yCoordinateMinValue = Math.min(yCoordinateMinValue, yCoordinate);
+                    yCoordinateMaxValue = Math.max(yCoordinateMaxValue, yCoordinate);
+
+                    locations.add(new Location(locationName, xCoordinate, yCoordinate));
+                } catch (NumberFormatException e) {
+                    System.err.println("Skipping invalid numeric values in line: " + line);
+                }
             }
-            xCoordinateMinValue = Float.MAX_VALUE;
-            yCoordinateMinValue = Float.MAX_VALUE;
-            float xCoordinateMaxValue = Float.MIN_VALUE;
-            float yCoordinateMaxValue = Float.MIN_VALUE;
-            String line;
-            String lineParsed[];
-            int index = 0;
-            locationArray = new Location[size];
-            scanner = new Scanner(new File(filePath));
-            while(scanner.hasNextLine()){
-                line = scanner.nextLine();
-                lineParsed = line.split(" ");
-                String locationName = lineParsed[0];
-                float xCoordinate = Float.parseFloat(lineParsed[1]);
-                float yCoordinate = Float.parseFloat(lineParsed[2]);
-                if(xCoordinate < xCoordinateMinValue) {
-                    xCoordinateMinValue = xCoordinate;
-                }
-                if(xCoordinate > xCoordinateMaxValue) {
-                    xCoordinateMaxValue = xCoordinate;
-                }
-                if(yCoordinate < yCoordinateMinValue) {
-                    yCoordinateMinValue = yCoordinate;
-                }
-                if(yCoordinate > yCoordinateMaxValue) {
-                    yCoordinateMaxValue = yCoordinate;
-                }
-                locationArray[index] = new Location(locationName, xCoordinate, yCoordinate);
-                index++;
-            }
+
+            // Convert List to Array
+            locationArray = locations.toArray(new Location[0]);
+
+            // Compute max distances
             xCoordMaxDistBetweenLocations = xCoordinateMaxValue - xCoordinateMinValue;
             yCoordMaxDistBetweenLocations = yCoordinateMaxValue - yCoordinateMinValue;
-        } catch (FileNotFoundException ex) {}
+
+        } catch (FileNotFoundException e) {
+            System.err.println("Error: File not found - " + filePath);
+        }
     }
 }
