@@ -1,10 +1,12 @@
 // --- DOM elements ---
-const uploadBtn    = document.getElementById("upload-btn");
-const findPathBtn  = document.getElementById("find-path-btn");
-const fileInput    = document.getElementById("file-input");
-const canvas       = document.getElementById("tsp-canvas");
-const visualFrame  = document.getElementById("visual-frame");
-const skipBtn      = document.getElementById("skip-btn");
+const uploadBtn     = document.getElementById("upload-btn");
+const fileName      = document.getElementById("file-nme")
+const findPathBtn   = document.getElementById("find-path-btn");
+const fileInput     = document.getElementById("file-input");
+const canvas        = document.getElementById("tsp-canvas");
+const visualFrame   = document.getElementById("visual-frame");
+const processingTxt = document.getElementById("processing-txt")
+const skipBtn       = document.getElementById("skip-btn");
 
 let ctx = null;
 let locations = [];
@@ -304,6 +306,14 @@ function handleFileChange(event) {
       return;
     }
 
+    fullName = file.name;
+    if (fullName.length > 16) {
+        extension = "." + fullName.split(".").slice(-1);
+        shortenedName = fullName.substring(0, 10);
+        fullName = shortenedName + ".." + extension;
+    }
+    fileName.innerText = "File uploaded: " + fullName;
+
     locations = parsed;
     tspPath = null;
 
@@ -330,6 +340,8 @@ findPathBtn.addEventListener("click", () => {
     return;
   }
 
+  processingTxt.style.display = "inline-block";
+
   // stop animation & hide skip
   if (animationId !== null) {
     cancelAnimationFrame(animationId);
@@ -338,11 +350,15 @@ findPathBtn.addEventListener("click", () => {
   isAnimating = false;
   skipBtn.style.display = "none";
 
-  const result = enhancedNearestNeighbour(locations);
-  tspPath = result.path;
-  console.log("Total tour distance:", result.distance.toFixed(2));
+  setTimeout(() => {
+    const result = enhancedNearestNeighbour(locations);
+    tspPath = result.path;
+    console.log("Total tour distance:", result.distance.toFixed(2));
 
-  animatePath(locations, tspPath);
+    // hide text and start animation
+    processingTxt.style.display = "none";
+    animatePath(locations, tspPath);
+  }, 0);
 });
 
 window.addEventListener("resize", resizeCanvasToFrame);
