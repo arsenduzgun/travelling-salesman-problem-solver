@@ -1,0 +1,113 @@
+/* --- Global --- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #d9d9d9;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* --- Main container --- */
+.tsp-container {
+  width: 900px;
+  padding: 40px 20px 60px;
+  text-align: center;
+}
+
+/* --- Title & Description --- */
+.tsp-title {
+  font-size: 24px;
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+.tsp-description {
+  font-size: 14px;
+  max-width: 700px;
+  margin: 0 auto 35px;
+  line-height: 1.5;
+}
+
+/* --- Buttons --- */
+.tsp-controls,
+.export-section {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 25px;
+}
+
+.tsp-button {
+  padding: 6px 12px;
+  font-size: 14px;
+  border-radius: 4px;
+  border: 1px solid #5a5a5a;
+  background-color: #f3f3f3;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.tsp-button:hover {
+  background-color: #e3e3e3;
+  transform: translateY(-1px);
+}
+
+.tsp-button:active {
+  transform: translateY(0);
+}
+
+/* --- Visualisation frame --- */
+.visual-section {
+  width: 500px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.visual-frame-title {
+  font-size: 18px;
+  margin: 24px 0 12px 0;
+}
+
+.visual-frame {
+  width: 100%;
+  height: 400px;
+  background-color: #ffffff;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px #c0c0c0;
+  position: relative; /* needed for absolute-positioned skip button */
+}
+
+/* Canvas fills the frame */
+#tsp-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Skip animation button centered at bottom */
+.skip-button {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  padding: 4px 10px;       /* smaller padding */
+  font-size: 11px;         /* smaller font */
+  border-radius: 4px;
+  border: 1px solid #5a5a5a;
+  background-color: #f3f3f3;
+  cursor: pointer;
+  display: none;           /* only visible during animation */
+  z-index: 10;             /* ensures it's above the canvas */
+}
+
+.skip-button:hover {
+  background-color: #e3e3e3;
+}

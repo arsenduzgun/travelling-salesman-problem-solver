@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Travelling Salesman Problem Solver</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+
+<body>
+  <div class="tsp-container">
+    <!-- Title -->
+    <h1 class="tsp-title">TRAVELLING SALESMAN PROBLEM SOLVER</h1>
+
+    <!-- Description -->
+    <p class="tsp-description">
+      The Travelling Salesman Problem asks for the shortest possible route
+      that visits each location exactly once and returns to the starting point.
+      This tool lets you upload locations, visualise them, and find an efficient path.
+    </p>
+
+    <!-- Top controls -->
+    <div class="tsp-controls">
+      <button class="tsp-button" id="upload-btn">Upload a file</button>
+      <button class="tsp-button" id="find-path-btn">Find a path</button>
+    </div>
+
+    <!-- Hidden file input -->
+    <input type="file" id="file-input" accept=".csv" style="display:none" />
+
+    <!-- Visualisation section -->
+    <section class="visual-section">
+      <div class="visual-frame-title"><strong>Visualisation Frame</strong></div>
+      <div class="visual-frame" id="visual-frame">
+        <canvas id="tsp-canvas"></canvas>
+        <button class="skip-button" id="skip-btn">Skip animation</button>
+      </div>
+    </section>
+
+    <!-- Export controls -->
+    <div class="export-section">
+      <button class="tsp-button" id="export-btn">Export found path</button>
+    </div>
+  </div>
+</body>
+</html>
