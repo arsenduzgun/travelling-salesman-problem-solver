@@ -1,11 +1,11 @@
 // --- DOM elements ---
 const uploadBtn     = document.getElementById("upload-btn");
-const fileName      = document.getElementById("file-nme")
+const fileName      = document.getElementById("file-nme");
 const findPathBtn   = document.getElementById("find-path-btn");
 const fileInput     = document.getElementById("file-input");
 const canvas        = document.getElementById("tsp-canvas");
 const visualFrame   = document.getElementById("visual-frame");
-const processingTxt = document.getElementById("processing-txt")
+const processingTxt = document.getElementById("processing-txt");
 const skipBtn       = document.getElementById("skip-btn");
 
 let ctx = null;
@@ -16,6 +16,36 @@ let animationId = null;
 let isAnimating = false;
 let animPoints = null;
 let animPath = null;
+
+// --- Web Worker setup ---
+let tspWorker = null;
+let workerRunning = false;
+
+if (window.Worker) {
+  tspWorker = new Worker("tsp-worker.js");
+
+  tspWorker.onmessage = (e) => {
+    const { path, distance } = e.data;
+
+    workerRunning = false;
+    processingTxt.style.display = "none";
+
+    tspPath = path;
+    console.log("Total tour distance:", distance.toFixed(2));
+
+    // start animation once worker is done
+    animatePath(locations, tspPath);
+  };
+
+  tspWorker.onerror = (e) => {
+    console.error("TSP worker error:", e.message);
+    workerRunning = false;
+    processingTxt.style.display = "none";
+    alert("An error occurred while solving the path.");
+  };
+} else {
+  console.warn("Web Workers are not supported in this browser.");
+}
 
 // ---------- Canvas setup ----------
 function resizeCanvasToFrame() {
@@ -145,94 +175,6 @@ function drawScene(points, pathIndices, edgesToDraw) {
   }
 }
 
-// ---------- TSP solver ----------
-function enhancedNearestNeighbour(points) {
-  const n = points.length;
-  if (n === 0) return { path: [], distance: 0 };
-
-  function dist(i, j) {
-    const dx = points[i].x - points[j].x;
-    const dy = points[i].y - points[j].y;
-    return Math.hypot(dx, dy);
-  }
-
-  function totalDistance(order) {
-    let d = 0;
-    for (let i = 0; i < n - 1; i++) d += dist(order[i], order[i + 1]);
-    d += dist(order[n - 1], order[0]);
-    return d;
-  }
-
-  function nearestNeighbourFrom(start) {
-    const visited = new Array(n).fill(false);
-    const order = new Array(n);
-    order[0] = start;
-    visited[start] = true;
-
-    for (let i = 1; i < n; i++) {
-      const current = order[i - 1];
-      let best = -1;
-      let bestD = Infinity;
-
-      for (let j = 0; j < n; j++) {
-        if (!visited[j]) {
-          const d = dist(current, j);
-          if (d < bestD) {
-            bestD = d;
-            best = j;
-          }
-        }
-      }
-      order[i] = best;
-      visited[best] = true;
-    }
-
-    return { order, distance: totalDistance(order) };
-  }
-
-  function twoOpt(order) {
-    let improved = true;
-    while (improved) {
-      improved = false;
-      for (let i = 1; i < n - 1; i++) {
-        for (let j = i + 1; j < n; j++) {
-          const a = order[i - 1];
-          const b = order[i];
-          const c = order[j];
-          const d = order[(j + 1) % n];
-
-          const curr = dist(a, b) + dist(c, d);
-          const next = dist(a, c) + dist(b, d);
-
-          if (next < curr) {
-            for (let l = i, r = j; l < r; l++, r--) {
-              [order[l], order[r]] = [order[r], order[l]];
-            }
-            improved = true;
-          }
-        }
-      }
-    }
-    return order;
-  }
-
-  let bestOrder = null;
-  let bestDist = Infinity;
-
-  for (let start = 0; start < n; start++) {
-    const { order, distance } = nearestNeighbourFrom(start);
-    if (distance < bestDist) {
-      bestDist = distance;
-      bestOrder = order;
-    }
-  }
-
-  bestOrder = twoOpt(bestOrder);
-  bestDist = totalDistance(bestOrder);
-
-  return { path: bestOrder, distance: bestDist };
-}
-
 // ---------- Animation ----------
 function animatePath(points, pathIndices) {
   if (!points || !pathIndices || pathIndices.length === 0) return;
@@ -255,7 +197,7 @@ function animatePath(points, pathIndices) {
     if (!isAnimating) return; // skip was clicked
 
     drawScene(points, pathIndices, edgesToDraw);
-    edgesToDraw += 1;  // ❗ 1 edge per frame (your original speed)
+    edgesToDraw += 1;  // 1 edge per frame
 
     if (edgesToDraw <= totalEdges) {
       animationId = requestAnimationFrame(step);
@@ -306,11 +248,11 @@ function handleFileChange(event) {
       return;
     }
 
-    fullName = file.name;
+    let fullName = file.name;
     if (fullName.length > 16) {
-        extension = "." + fullName.split(".").slice(-1);
-        shortenedName = fullName.substring(0, 10);
-        fullName = shortenedName + ".." + extension;
+      const extension = "." + fullName.split(".").slice(-1);
+      const shortenedName = fullName.substring(0, 10);
+      fullName = shortenedName + ".." + extension;
     }
     fileName.innerText = "File uploaded: " + fullName;
 
@@ -340,6 +282,17 @@ findPathBtn.addEventListener("click", () => {
     return;
   }
 
+  if (!tspWorker) {
+    alert("Your browser does not support Web Workers. The solver may freeze the UI.");
+    return;
+  }
+
+  if (workerRunning) {
+    // (Optional: later you can turn this into a "Stop" button)
+    console.log("Solver already running.");
+    return;
+  }
+
   processingTxt.style.display = "inline-block";
 
   // stop animation & hide skip
@@ -350,15 +303,8 @@ findPathBtn.addEventListener("click", () => {
   isAnimating = false;
   skipBtn.style.display = "none";
 
-  setTimeout(() => {
-    const result = enhancedNearestNeighbour(locations);
-    tspPath = result.path;
-    console.log("Total tour distance:", result.distance.toFixed(2));
-
-    // hide text and start animation
-    processingTxt.style.display = "none";
-    animatePath(locations, tspPath);
-  }, 0);
+  workerRunning = true;
+  tspWorker.postMessage({ points: locations });
 });
 
 window.addEventListener("resize", resizeCanvasToFrame);
