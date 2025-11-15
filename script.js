@@ -1,13 +1,13 @@
 // --- DOM elements ---
-const uploadBtn     = document.getElementById("upload-btn");
-const fileName      = document.getElementById("file-nme");
+const uploadBtn      = document.getElementById("upload-btn");
+const fileName       = document.getElementById("file-nme");
 const startStopBtn   = document.getElementById("start-stop-btn");
-const fileInput     = document.getElementById("file-input");
-const canvas        = document.getElementById("tsp-canvas");
-const visualFrame   = document.getElementById("visual-frame");
-const processingTxt = document.getElementById("processing-txt");
-const skipBtn       = document.getElementById("skip-btn");
-
+const fileInput      = document.getElementById("file-input");
+const canvas         = document.getElementById("tsp-canvas");
+const visualFrame    = document.getElementById("visual-frame");
+const processingTxt  = document.getElementById("processing-txt");
+const skipBtn        = document.getElementById("skip-btn");
+const exportBtn      = document.getElementById("export-btn");
 
 let processingAnimation = null;
 
@@ -23,6 +23,21 @@ let animPath = null;
 let tspWorker = null;
 let workerRunning = false;
 
+let originalFileName = null; // <- real uploaded filename (full)
+
+// ---------- Control state helper ----------
+// upload disabled when:   workerRunning || isAnimating
+// start/stop disabled when: !hasFile || isAnimating
+// export enabled when:    !isAnimating && tspPath != null
+function updateControls() {
+  const hasFile = locations.length > 0;
+
+  uploadBtn.disabled    = workerRunning || isAnimating;
+  startStopBtn.disabled = !hasFile      || isAnimating;
+  exportBtn.disabled    = isAnimating   || !tspPath;
+}
+
+// ---------- Worker setup ----------
 function createTspWorker() {
   if (!window.Worker) {
     console.warn("Web Workers are not supported in this browser.");
@@ -36,7 +51,7 @@ function createTspWorker() {
 
     const { path, distance } = e.data;
     workerRunning = false;
-    startStopBtn.textContent = "Start";  // back to Start
+    startStopBtn.textContent = "Start";
 
     tspPath = path;
     console.log("Total tour distance:", distance.toFixed(2));
@@ -50,6 +65,8 @@ function createTspWorker() {
     workerRunning = false;
     startStopBtn.textContent = "Start";
     stopProcessingAnimation();
+    tspPath = null;
+    updateControls();
     alert("An error occurred while solving the path.");
   };
 
@@ -58,13 +75,13 @@ function createTspWorker() {
 
 tspWorker = createTspWorker();
 
-
 // ---------- Canvas setup ----------
 function resizeCanvasToFrame() {
   const rect = visualFrame.getBoundingClientRect();
   canvas.width  = rect.width;
   canvas.height = rect.height;
   if (!ctx) ctx = canvas.getContext("2d");
+  // redraw current scene if any
   drawScene(locations, tspPath);
 }
 
@@ -199,11 +216,12 @@ function animatePath(points, pathIndices) {
   let edgesToDraw = 0;
   const totalEdges = pathIndices.length;
 
-  // activate skip UI
+  // activate skip UI + animation state
   isAnimating = true;
   animPoints = points;
   animPath = pathIndices;
   skipBtn.style.display = "inline-block";
+  updateControls(); // disables upload & start/stop, keeps export disabled
 
   function step() {
     if (!isAnimating) return; // skip was clicked
@@ -217,7 +235,9 @@ function animatePath(points, pathIndices) {
       animationId = null;
       isAnimating = false;
       skipBtn.style.display = "none";
-      drawScene(points, pathIndices);
+      drawScene(points, pathIndices); // final full path
+
+      updateControls(); // animation finished → maybe enable export
     }
   }
 
@@ -237,8 +257,11 @@ skipBtn.addEventListener("click", () => {
   skipBtn.style.display = "none";
 
   if (animPoints && animPath) {
+    // draw full final path immediately
     drawScene(animPoints, animPath);
   }
+
+  updateControls(); // animation ended via skip
 });
 
 // ---------- File handling ----------
@@ -260,6 +283,8 @@ function handleFileChange(event) {
       return;
     }
 
+    originalFileName = file.name;  // store REAL full filename
+
     let fullName = file.name;
     if (fullName.length > 16) {
       const extension = "." + fullName.split(".").slice(-1);
@@ -269,9 +294,9 @@ function handleFileChange(event) {
     fileName.innerText = "File uploaded: " + fullName;
 
     locations = parsed;
-    tspPath = null;
+    tspPath   = null;   // new file → old path invalid
 
-    // stop animation & hide skip
+    // stop animation & hide skip (just in case)
     if (animationId !== null) {
       cancelAnimationFrame(animationId);
       animationId = null;
@@ -279,15 +304,19 @@ function handleFileChange(event) {
     isAnimating = false;
     skipBtn.style.display = "none";
 
-    drawScene(locations, tspPath);
+    // We DO NOT draw the points yet – canvas stays blank
+    clearCanvas();
+
+    updateControls(); // file uploaded → enable start, disable export
   };
   reader.readAsText(file);
 }
 
-// ---------- Event listeners ----------
+// ---------- Upload & file input ----------
 uploadBtn.addEventListener("click", () => fileInput.click());
 fileInput.addEventListener("change", handleFileChange);
 
+// ---------- Processing text animation ----------
 function startProcessingAnimation() {
   let dots = 1;
 
@@ -297,7 +326,7 @@ function startProcessingAnimation() {
   processingAnimation = setInterval(() => {
     dots = (dots % 3) + 1;
     processingTxt.innerText = "Processing" + ".".repeat(dots);
-  }, 500); // update every 500 ms (smooth timing)
+  }, 500);
 }
 
 function stopProcessingAnimation() {
@@ -306,9 +335,8 @@ function stopProcessingAnimation() {
   processingTxt.style.display = "none";
 }
 
-
+// ---------- Start/Stop button ----------
 startStopBtn.addEventListener("click", () => {
-  // If worker is not available at all
   if (!tspWorker) {
     alert("Your browser does not support Web Workers. The solver may freeze the UI.");
     return;
@@ -317,7 +345,13 @@ startStopBtn.addEventListener("click", () => {
   // ---- START mode ----
   if (!workerRunning) {
     if (locations.length === 0) {
+      // should be disabled by updateControls, but just in case
       alert("Please upload a CSV file first.");
+      return;
+    }
+
+    if (isAnimating) {
+      // should be disabled during animation, so just ignore
       return;
     }
 
@@ -328,13 +362,17 @@ startStopBtn.addEventListener("click", () => {
     }
     isAnimating = false;
     skipBtn.style.display = "none";
-    
 
-    // start "Processing..." animation
+    // Show points for the first time now
+    tspPath = null;
+    drawScene(locations, null);
+
     startProcessingAnimation();
 
     workerRunning = true;
     startStopBtn.textContent = "Stop";
+
+    updateControls(); // disables upload, keeps export disabled
 
     // send work to the worker
     tspWorker.postMessage({ points: locations });
@@ -342,7 +380,6 @@ startStopBtn.addEventListener("click", () => {
   }
 
   // ---- STOP mode ----
-  // user clicked while worker is running → cancel solve
   workerRunning = false;
   stopProcessingAnimation();
   startStopBtn.textContent = "Start";
@@ -351,19 +388,44 @@ startStopBtn.addEventListener("click", () => {
   tspWorker.terminate();
   tspWorker = createTspWorker();
 
-  // optional: clear any path and redraw only the points
   tspPath = null;
-  drawScene(locations, tspPath);
-
-  // also make sure any animation/skip is stopped
-  if (animationId !== null) {
-    cancelAnimationFrame(animationId);
-    animationId = null;
-  }
-  isAnimating = false;
-  skipBtn.style.display = "none";
+  clearCanvas();
+  updateControls();
 });
 
+// ---------- Export button ----------
+exportBtn.addEventListener("click", () => {
+  if (!tspPath || isAnimating) return;
 
+  const header = "id,x,y";
+  const rows = tspPath.map(idx => {
+    const p = locations[idx];
+    return `${p.id},${p.x},${p.y}`;
+  });
+
+  const csvContent = [header, ...rows].join("\r\n");
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  // filename based on original file name (without extension)
+  let base = originalFileName || "tsp";
+  base = base.replace(/\.[^/.]+$/, "");  // strip extension
+  const finalName = base + "_path.csv";
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = finalName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(url);
+});
+
+// ---------- Init ----------
 window.addEventListener("resize", resizeCanvasToFrame);
-window.addEventListener("DOMContentLoaded", resizeCanvasToFrame);
+window.addEventListener("DOMContentLoaded", () => {
+  resizeCanvasToFrame();
+  updateControls(); // initial state: no file, no path
+});
