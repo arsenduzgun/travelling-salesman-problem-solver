@@ -1,7 +1,7 @@
 // --- DOM elements ---
 const uploadBtn     = document.getElementById("upload-btn");
 const fileName      = document.getElementById("file-nme");
-const findPathBtn   = document.getElementById("find-path-btn");
+const startStopBtn   = document.getElementById("start-stop-btn");
 const fileInput     = document.getElementById("file-input");
 const canvas        = document.getElementById("tsp-canvas");
 const visualFrame   = document.getElementById("visual-frame");
@@ -20,20 +20,23 @@ let isAnimating = false;
 let animPoints = null;
 let animPath = null;
 
-// --- Web Worker setup ---
 let tspWorker = null;
 let workerRunning = false;
 
-if (window.Worker) {
-  tspWorker = new Worker("tsp-worker.js");
+function createTspWorker() {
+  if (!window.Worker) {
+    console.warn("Web Workers are not supported in this browser.");
+    return null;
+  }
 
-  tspWorker.onmessage = (e) => {
+  const worker = new Worker("tsp-worker.js");
+
+  worker.onmessage = (e) => {
     stopProcessingAnimation();
 
     const { path, distance } = e.data;
-
     workerRunning = false;
-    processingTxt.style.display = "none";
+    startStopBtn.textContent = "Start";  // back to Start
 
     tspPath = path;
     console.log("Total tour distance:", distance.toFixed(2));
@@ -42,15 +45,19 @@ if (window.Worker) {
     animatePath(locations, tspPath);
   };
 
-  tspWorker.onerror = (e) => {
+  worker.onerror = (e) => {
     console.error("TSP worker error:", e.message);
     workerRunning = false;
-    processingTxt.style.display = "none";
+    startStopBtn.textContent = "Start";
+    stopProcessingAnimation();
     alert("An error occurred while solving the path.");
   };
-} else {
-  console.warn("Web Workers are not supported in this browser.");
+
+  return worker;
 }
+
+tspWorker = createTspWorker();
+
 
 // ---------- Canvas setup ----------
 function resizeCanvasToFrame() {
@@ -288,7 +295,7 @@ function startProcessingAnimation() {
   processingTxt.innerText = "Processing.";
 
   processingAnimation = setInterval(() => {
-    dots = (dots % 3) + 1;  // cycles 0 → 1 → 2 → 3 → back to 0
+    dots = (dots % 3) + 1;
     processingTxt.innerText = "Processing" + ".".repeat(dots);
   }, 500); // update every 500 ms (smooth timing)
 }
@@ -300,38 +307,63 @@ function stopProcessingAnimation() {
 }
 
 
-findPathBtn.addEventListener("click", () => {
-  if (locations.length === 0) {
-    alert("Please upload a CSV file first.");
-    return;
-  }
-
+startStopBtn.addEventListener("click", () => {
+  // If worker is not available at all
   if (!tspWorker) {
     alert("Your browser does not support Web Workers. The solver may freeze the UI.");
     return;
   }
 
-  if (workerRunning) {
-    // (Optional: later you can turn this into a "Stop" button)
-    console.log("Solver already running.");
+  // ---- START mode ----
+  if (!workerRunning) {
+    if (locations.length === 0) {
+      alert("Please upload a CSV file first.");
+      return;
+    }
+
+    // reset any existing animation & skip button
+    if (animationId !== null) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    }
+    isAnimating = false;
+    skipBtn.style.display = "none";
+    
+
+    // start "Processing..." animation
+    startProcessingAnimation();
+
+    workerRunning = true;
+    startStopBtn.textContent = "Stop";
+
+    // send work to the worker
+    tspWorker.postMessage({ points: locations });
     return;
   }
 
-  processingTxt.style.display = "inline-block";
+  // ---- STOP mode ----
+  // user clicked while worker is running → cancel solve
+  workerRunning = false;
+  stopProcessingAnimation();
+  startStopBtn.textContent = "Start";
 
-  // stop animation & hide skip
+  // kill current worker and create a fresh one for next run
+  tspWorker.terminate();
+  tspWorker = createTspWorker();
+
+  // optional: clear any path and redraw only the points
+  tspPath = null;
+  drawScene(locations, tspPath);
+
+  // also make sure any animation/skip is stopped
   if (animationId !== null) {
     cancelAnimationFrame(animationId);
     animationId = null;
   }
   isAnimating = false;
   skipBtn.style.display = "none";
-
-  startProcessingAnimation();
-
-  workerRunning = true;
-  tspWorker.postMessage({ points: locations });
 });
+
 
 window.addEventListener("resize", resizeCanvasToFrame);
 window.addEventListener("DOMContentLoaded", resizeCanvasToFrame);
