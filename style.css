@@ -106,6 +106,10 @@ body {
   display: none;
   color: #2a2a2a;
   z-index: 10;
+    /* 🔥 Add these for fixed width */
+  font-family: monospace;
+  width: 95px;        /* fixed size, no shifting */
+  text-align: left;  /* keeps it centered nicely */
 }
 
 /* Skip animation button centered at bottom */

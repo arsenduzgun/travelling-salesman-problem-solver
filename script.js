@@ -8,6 +8,9 @@ const visualFrame   = document.getElementById("visual-frame");
 const processingTxt = document.getElementById("processing-txt");
 const skipBtn       = document.getElementById("skip-btn");
 
+
+let processingAnimation = null;
+
 let ctx = null;
 let locations = [];
 let tspPath = null;
@@ -25,6 +28,8 @@ if (window.Worker) {
   tspWorker = new Worker("tsp-worker.js");
 
   tspWorker.onmessage = (e) => {
+    stopProcessingAnimation();
+
     const { path, distance } = e.data;
 
     workerRunning = false;
@@ -276,6 +281,25 @@ function handleFileChange(event) {
 uploadBtn.addEventListener("click", () => fileInput.click());
 fileInput.addEventListener("change", handleFileChange);
 
+function startProcessingAnimation() {
+  let dots = 1;
+
+  processingTxt.style.display = "inline-block";
+  processingTxt.innerText = "Processing.";
+
+  processingAnimation = setInterval(() => {
+    dots = (dots % 3) + 1;  // cycles 0 → 1 → 2 → 3 → back to 0
+    processingTxt.innerText = "Processing" + ".".repeat(dots);
+  }, 500); // update every 500 ms (smooth timing)
+}
+
+function stopProcessingAnimation() {
+  clearInterval(processingAnimation);
+  processingAnimation = null;
+  processingTxt.style.display = "none";
+}
+
+
 findPathBtn.addEventListener("click", () => {
   if (locations.length === 0) {
     alert("Please upload a CSV file first.");
@@ -302,6 +326,8 @@ findPathBtn.addEventListener("click", () => {
   }
   isAnimating = false;
   skipBtn.style.display = "none";
+
+  startProcessingAnimation();
 
   workerRunning = true;
   tspWorker.postMessage({ points: locations });
