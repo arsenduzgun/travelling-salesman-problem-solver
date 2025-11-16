@@ -1,15 +1,15 @@
 "use strict";
 
 // --- DOM elements ---
-const uploadBtn     = document.getElementById("upload-btn");
-const fileNameEl    = document.getElementById("file-name");
-const startStopBtn  = document.getElementById("start-stop-btn");
-const fileInput     = document.getElementById("file-input");
-const canvas        = document.getElementById("tsp-canvas");
-const visualFrame   = document.getElementById("visual-frame");
-const processingTxt = document.getElementById("processing-txt");
-const skipBtn       = document.getElementById("skip-btn");
-const exportBtn     = document.getElementById("export-btn");
+const uploadBtn = document.getElementById("upload-btn");
+const fileNameEl = document.getElementById("file-name");
+const startStopBtn = document.getElementById("start-stop-btn");
+const fileInput = document.getElementById("file-input");
+const canvas = document.getElementById("tsp-canvas");
+const visualFrame = document.getElementById("visual-frame");
+const processingLoader = document.getElementById("processing-loader");
+const skipBtn = document.getElementById("skip-btn");
+const exportBtn = document.getElementById("export-btn");
 
 // --- Canvas & state ---
 let ctx = null;
@@ -23,7 +23,6 @@ let animPath = null;
 
 let tspWorker = null;
 let workerRunning = false;
-let processingAnimation = null;
 
 let originalFileName = null; // real uploaded filename
 
@@ -292,31 +291,14 @@ skipBtn.addEventListener("click", () => {
   updateControls();
 });
 
-// ---------------------------------------------------
-// Processing text animation
-// ---------------------------------------------------
 function startProcessingAnimation() {
-  if (processingAnimation) {
-    clearInterval(processingAnimation);
-  }
-
-  let dots = 1;
-  processingTxt.style.display = "inline-block";
-  processingTxt.innerText = "Processing.";
-
-  processingAnimation = setInterval(() => {
-    dots = (dots % 3) + 1;
-    processingTxt.innerText = "Processing" + ".".repeat(dots);
-  }, 500);
+  processingLoader.style.display = "flex";
 }
 
 function stopProcessingAnimation() {
-  if (processingAnimation) {
-    clearInterval(processingAnimation);
-    processingAnimation = null;
-  }
-  processingTxt.style.display = "none";
+  processingLoader.style.display = "none";
 }
+
 
 // ---------------------------------------------------
 // File handling

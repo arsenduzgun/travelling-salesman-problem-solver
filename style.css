@@ -115,19 +115,35 @@ body {
   pointer-events: none;
 }
 
-/* Processing text */
-.processing-text {
+.processing-loader {
   position: absolute;
   left: 50%;
   bottom: 8px;
   transform: translateX(-50%);
-  display: none;
-  color: #2a2a2a;
+  display: none;          /* <-- THIS must stay */
   z-index: 10;
-  font-family: monospace;
-  width: 95px;
-  text-align: left;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
 }
+
+.processing-loader span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5a5a5a;
+  display: inline-block;
+  animation: bounce 0.6s infinite alternate ease-in-out;
+}
+
+.processing-loader span:nth-child(2) { animation-delay: 0.15s; }
+.processing-loader span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-10px); }
+}
+
 
 /* Skip animation button centered at bottom */
 .skip-button {
