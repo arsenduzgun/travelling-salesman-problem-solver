@@ -36,7 +36,7 @@ body {
   line-height: 1.5;
 }
 
-/* --- Buttons --- */
+/* --- Buttons & top controls --- */
 .tsp-controls,
 .export-section {
   display: flex;
@@ -46,9 +46,13 @@ body {
 }
 
 .file-name {
-    padding-top: 6px;
-    width: 250px;
+  padding-top: 6px;
+  width: 250px;
+  text-align: center;
+  font-size: 14px;
+  color: #333;
 }
+
 
 .tsp-button {
   width: 80px;
@@ -61,13 +65,17 @@ body {
   transition: background-color 0.15s ease, transform 0.1s ease;
 }
 
-.tsp-button:hover {
+.tsp-button:hover:not(:disabled) {
   background-color: #e3e3e3;
-  transform: translateY(-1px);
 }
 
-.tsp-button:active {
+.tsp-button:active:not(:disabled) {
   transform: translateY(0);
+}
+
+.tsp-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* --- Visualisation frame --- */
@@ -77,14 +85,14 @@ body {
   text-align: center;
 }
 
-
 .visual-frame {
   width: 100%;
   height: 420px;
   background-color: #ffffff;
   border-radius: 2px;
   box-shadow: 0 0 0 1px #c0c0c0;
-  position: relative; /* needed for absolute-positioned skip button */
+  position: relative;
+  overflow: hidden;
 }
 
 /* Canvas fills the frame */
@@ -94,6 +102,20 @@ body {
   display: block;
 }
 
+/* Canvas title inside frame */
+.canvas-title {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  font-weight: 600;
+  color: #444;
+  z-index: 20;
+  pointer-events: none;
+}
+
+/* Processing text */
 .processing-text {
   position: absolute;
   left: 50%;
@@ -113,33 +135,16 @@ body {
   left: 50%;
   bottom: 8px;
   transform: translateX(-50%);
-  padding: 4px 10px;       /* smaller padding */
-  font-size: 11px;         /* smaller font */
+  padding: 4px 10px;
+  font-size: 11px;
   border-radius: 4px;
   border: 1px solid #5a5a5a;
   background-color: #f3f3f3;
   cursor: pointer;
-  display: none;           /* only visible during animation */
-  z-index: 10;             /* ensures it's above the canvas */
+  display: none;
+  z-index: 10;
 }
 
 .skip-button:hover {
   background-color: #e3e3e3;
-}
-
-.tsp-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.canvas-title {
-  position: absolute;
-  top: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 16px;
-  font-weight: 600;
-  color: #444;
-  z-index: 20;         /* above canvas */
-  pointer-events: none; /* avoids blocking clicks */
 }

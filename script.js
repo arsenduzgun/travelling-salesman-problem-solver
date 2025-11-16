@@ -1,34 +1,38 @@
+"use strict";
+
 // --- DOM elements ---
-const uploadBtn      = document.getElementById("upload-btn");
-const fileName       = document.getElementById("file-nme");
-const startStopBtn   = document.getElementById("start-stop-btn");
-const fileInput      = document.getElementById("file-input");
-const canvas         = document.getElementById("tsp-canvas");
-const visualFrame    = document.getElementById("visual-frame");
-const processingTxt  = document.getElementById("processing-txt");
-const skipBtn        = document.getElementById("skip-btn");
-const exportBtn      = document.getElementById("export-btn");
+const uploadBtn     = document.getElementById("upload-btn");
+const fileNameEl    = document.getElementById("file-name");
+const startStopBtn  = document.getElementById("start-stop-btn");
+const fileInput     = document.getElementById("file-input");
+const canvas        = document.getElementById("tsp-canvas");
+const visualFrame   = document.getElementById("visual-frame");
+const processingTxt = document.getElementById("processing-txt");
+const skipBtn       = document.getElementById("skip-btn");
+const exportBtn     = document.getElementById("export-btn");
 
-let processingAnimation = null;
-
+// --- Canvas & state ---
 let ctx = null;
 let locations = [];
 let tspPath = null;
-let animationId = null;
 
+let animationId = null;
 let isAnimating = false;
 let animPoints = null;
 let animPath = null;
 
 let tspWorker = null;
 let workerRunning = false;
+let processingAnimation = null;
 
-let originalFileName = null; // <- real uploaded filename (full)
+let originalFileName = null; // real uploaded filename
 
-// ---------- Control state helper ----------
+// ---------------------------------------------------
+// Control state helper
 // upload disabled when:   workerRunning || isAnimating
 // start/stop disabled when: !hasFile || isAnimating
 // export enabled when:    !isAnimating && tspPath != null
+// ---------------------------------------------------
 function updateControls() {
   const hasFile = locations.length > 0;
 
@@ -37,7 +41,9 @@ function updateControls() {
   exportBtn.disabled    = isAnimating   || !tspPath;
 }
 
-// ---------- Worker setup ----------
+// ---------------------------------------------------
+// Worker setup
+// ---------------------------------------------------
 function createTspWorker() {
   if (!window.Worker) {
     console.warn("Web Workers are not supported in this browser.");
@@ -48,15 +54,21 @@ function createTspWorker() {
 
   worker.onmessage = (e) => {
     stopProcessingAnimation();
-
-    const { path, distance } = e.data;
     workerRunning = false;
     startStopBtn.textContent = "Start";
 
-    tspPath = path;
-    console.log("Total tour distance:", distance.toFixed(2));
+    const { path, distance } = e.data || {};
+    if (!path || !Array.isArray(path) || path.length === 0) {
+      tspPath = null;
+      updateControls();
+      alert("No valid path found.");
+      return;
+    }
 
-    // start animation once worker is done
+    tspPath = path;
+    console.log("Total tour distance:", distance?.toFixed?.(2) ?? distance);
+
+    // Start animation when worker finishes
     animatePath(locations, tspPath);
   };
 
@@ -73,15 +85,24 @@ function createTspWorker() {
   return worker;
 }
 
-tspWorker = createTspWorker();
+function ensureWorker() {
+  if (!tspWorker) {
+    tspWorker = createTspWorker();
+  }
+}
 
-// ---------- Canvas setup ----------
+// ---------------------------------------------------
+// Canvas setup
+// ---------------------------------------------------
 function resizeCanvasToFrame() {
   const rect = visualFrame.getBoundingClientRect();
   canvas.width  = rect.width;
   canvas.height = rect.height;
-  if (!ctx) ctx = canvas.getContext("2d");
-  // redraw current scene if any
+
+  if (!ctx) {
+    ctx = canvas.getContext("2d");
+  }
+
   drawScene(locations, tspPath);
 }
 
@@ -94,7 +115,9 @@ function clearCanvas() {
   ctx.strokeRect(0, 0, canvas.width, canvas.height);
 }
 
-// ---------- CSV parsing ----------
+// ---------------------------------------------------
+// CSV parsing
+// ---------------------------------------------------
 function parseCsv(text) {
   const lines = text
     .split(/\r?\n/)
@@ -109,6 +132,7 @@ function parseCsv(text) {
 
     const y = parseFloat(parts[parts.length - 1]);
     const x = parseFloat(parts[parts.length - 2]);
+
     if (Number.isNaN(x) || Number.isNaN(y)) continue;
 
     const id = (parts.length > 2)
@@ -121,7 +145,9 @@ function parseCsv(text) {
   return parsed;
 }
 
-// ---------- Coordinate transform ----------
+// ---------------------------------------------------
+// Coordinate transform
+// ---------------------------------------------------
 function computeTransform(points) {
   let minX = Infinity, maxX = -Infinity;
   let minY = Infinity, maxY = -Infinity;
@@ -133,8 +159,8 @@ function computeTransform(points) {
     if (p.y > maxY) maxY = p.y;
   }
 
-  const rangeX = maxX - minX || 1;
-  const rangeY = maxY - minY || 1;
+  const rangeX = (maxX - minX) || 1;
+  const rangeY = (maxY - minY) || 1;
 
   const padding = 40;
   const drawableWidth  = canvas.width  - 2 * padding;
@@ -151,10 +177,13 @@ function computeTransform(points) {
   return { minX, minY, scale, offsetX, offsetY };
 }
 
-// ---------- Draw scene ----------
+// ---------------------------------------------------
+// Drawing
+// ---------------------------------------------------
 function drawScene(points, pathIndices, edgesToDraw) {
   if (!ctx) return;
   clearCanvas();
+
   if (!points || points.length === 0) return;
 
   const { minX, minY, scale, offsetX, offsetY } = computeTransform(points);
@@ -164,7 +193,7 @@ function drawScene(points, pathIndices, edgesToDraw) {
     y: offsetY + (p.y - minY) * scale
   }));
 
-  // Draw path + partial path animation support
+  // Draw path (with optional partial edges)
   if (pathIndices && pathIndices.length > 1) {
     const totalEdgesWithoutClosing = pathIndices.length - 1;
     const limit = typeof edgesToDraw === "number"
@@ -204,30 +233,37 @@ function drawScene(points, pathIndices, edgesToDraw) {
   }
 }
 
-// ---------- Animation ----------
-function animatePath(points, pathIndices) {
-  if (!points || !pathIndices || pathIndices.length === 0) return;
-
+// ---------------------------------------------------
+// Animation
+// ---------------------------------------------------
+function stopAnimation() {
   if (animationId !== null) {
     cancelAnimationFrame(animationId);
     animationId = null;
   }
+  isAnimating = false;
+  skipBtn.style.display = "none";
+}
+
+function animatePath(points, pathIndices) {
+  if (!points || !pathIndices || pathIndices.length === 0) return;
+
+  stopAnimation(); // ensure clean start
 
   let edgesToDraw = 0;
   const totalEdges = pathIndices.length;
 
-  // activate skip UI + animation state
   isAnimating = true;
   animPoints = points;
   animPath = pathIndices;
   skipBtn.style.display = "inline-block";
-  updateControls(); // disables upload & start/stop, keeps export disabled
+  updateControls(); // disable upload & start/stop, export
 
   function step() {
-    if (!isAnimating) return; // skip was clicked
+    if (!isAnimating) return;
 
     drawScene(points, pathIndices, edgesToDraw);
-    edgesToDraw += 1;  // 1 edge per frame
+    edgesToDraw += 1;
 
     if (edgesToDraw <= totalEdges) {
       animationId = requestAnimationFrame(step);
@@ -236,35 +272,62 @@ function animatePath(points, pathIndices) {
       isAnimating = false;
       skipBtn.style.display = "none";
       drawScene(points, pathIndices); // final full path
-
-      updateControls(); // animation finished → maybe enable export
+      updateControls();
     }
   }
 
   step();
 }
 
-// ---------- Skip button ----------
+// Skip button
 skipBtn.addEventListener("click", () => {
   if (!isAnimating) return;
 
-  if (animationId !== null) {
-    cancelAnimationFrame(animationId);
-    animationId = null;
-  }
-
-  isAnimating = false;
-  skipBtn.style.display = "none";
+  stopAnimation();
 
   if (animPoints && animPath) {
-    // draw full final path immediately
     drawScene(animPoints, animPath);
   }
 
-  updateControls(); // animation ended via skip
+  updateControls();
 });
 
-// ---------- File handling ----------
+// ---------------------------------------------------
+// Processing text animation
+// ---------------------------------------------------
+function startProcessingAnimation() {
+  if (processingAnimation) {
+    clearInterval(processingAnimation);
+  }
+
+  let dots = 1;
+  processingTxt.style.display = "inline-block";
+  processingTxt.innerText = "Processing.";
+
+  processingAnimation = setInterval(() => {
+    dots = (dots % 3) + 1;
+    processingTxt.innerText = "Processing" + ".".repeat(dots);
+  }, 500);
+}
+
+function stopProcessingAnimation() {
+  if (processingAnimation) {
+    clearInterval(processingAnimation);
+    processingAnimation = null;
+  }
+  processingTxt.style.display = "none";
+}
+
+// ---------------------------------------------------
+// File handling
+// ---------------------------------------------------
+function resetStateForNewFile() {
+  tspPath = null;
+  stopAnimation();
+  clearCanvas();
+  updateControls();
+}
+
 function handleFileChange(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -278,65 +341,42 @@ function handleFileChange(event) {
   reader.onload = e => {
     const text = e.target.result;
     const parsed = parseCsv(text);
+
     if (parsed.length === 0) {
       alert("No valid coordinates found in the CSV file.");
       return;
     }
 
-    originalFileName = file.name;  // store REAL full filename
+    originalFileName = file.name;
 
-    let fullName = file.name;
-    if (fullName.length > 16) {
-      const extension = "." + fullName.split(".").slice(-1);
-      const shortenedName = fullName.substring(0, 10);
-      fullName = shortenedName + ".." + extension;
+    let displayName = file.name;
+    if (displayName.length > 16) {
+      const parts = displayName.split(".");
+      const ext   = parts.length > 1 ? "." + parts.pop() : "";
+      const short = displayName.substring(0, 10);
+      displayName = short + ".." + ext;
     }
-    fileName.innerText = "File uploaded: " + fullName;
+
+    fileNameEl.innerText = "File uploaded: " + displayName;
 
     locations = parsed;
-    tspPath   = null;   // new file → old path invalid
+    resetStateForNewFile();   // keeps canvas blank until Start is clicked
 
-    // stop animation & hide skip (just in case)
-    if (animationId !== null) {
-      cancelAnimationFrame(animationId);
-      animationId = null;
-    }
-    isAnimating = false;
-    skipBtn.style.display = "none";
-
-    // We DO NOT draw the points yet – canvas stays blank
-    clearCanvas();
-
-    updateControls(); // file uploaded → enable start, disable export
+    updateControls(); // file uploaded → enable start, keep export disabled
   };
   reader.readAsText(file);
 }
 
-// ---------- Upload & file input ----------
+// Upload & file input
 uploadBtn.addEventListener("click", () => fileInput.click());
 fileInput.addEventListener("change", handleFileChange);
 
-// ---------- Processing text animation ----------
-function startProcessingAnimation() {
-  let dots = 1;
-
-  processingTxt.style.display = "inline-block";
-  processingTxt.innerText = "Processing.";
-
-  processingAnimation = setInterval(() => {
-    dots = (dots % 3) + 1;
-    processingTxt.innerText = "Processing" + ".".repeat(dots);
-  }, 500);
-}
-
-function stopProcessingAnimation() {
-  clearInterval(processingAnimation);
-  processingAnimation = null;
-  processingTxt.style.display = "none";
-}
-
-// ---------- Start/Stop button ----------
+// ---------------------------------------------------
+// Start/Stop button
+// ---------------------------------------------------
 startStopBtn.addEventListener("click", () => {
+  ensureWorker();
+
   if (!tspWorker) {
     alert("Your browser does not support Web Workers. The solver may freeze the UI.");
     return;
@@ -345,36 +385,22 @@ startStopBtn.addEventListener("click", () => {
   // ---- START mode ----
   if (!workerRunning) {
     if (locations.length === 0) {
-      // should be disabled by updateControls, but just in case
       alert("Please upload a CSV file first.");
       return;
     }
+    if (isAnimating) return; // should be disabled already
 
-    if (isAnimating) {
-      // should be disabled during animation, so just ignore
-      return;
-    }
-
-    // reset any existing animation & skip button
-    if (animationId !== null) {
-      cancelAnimationFrame(animationId);
-      animationId = null;
-    }
-    isAnimating = false;
-    skipBtn.style.display = "none";
+    stopAnimation();
+    tspPath = null;
 
     // Show points for the first time now
-    tspPath = null;
     drawScene(locations, null);
 
     startProcessingAnimation();
-
     workerRunning = true;
     startStopBtn.textContent = "Stop";
+    updateControls();
 
-    updateControls(); // disables upload, keeps export disabled
-
-    // send work to the worker
     tspWorker.postMessage({ points: locations });
     return;
   }
@@ -384,16 +410,19 @@ startStopBtn.addEventListener("click", () => {
   stopProcessingAnimation();
   startStopBtn.textContent = "Start";
 
-  // kill current worker and create a fresh one for next run
-  tspWorker.terminate();
-  tspWorker = createTspWorker();
+  if (tspWorker) {
+    tspWorker.terminate();
+    tspWorker = null;
+  }
 
   tspPath = null;
   clearCanvas();
   updateControls();
 });
 
-// ---------- Export button ----------
+// ---------------------------------------------------
+// Export button
+// ---------------------------------------------------
 exportBtn.addEventListener("click", () => {
   if (!tspPath || isAnimating) return;
 
@@ -404,11 +433,9 @@ exportBtn.addEventListener("click", () => {
   });
 
   const csvContent = [header, ...rows].join("\r\n");
-
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
+  const url  = URL.createObjectURL(blob);
 
-  // filename based on original file name (without extension)
   let base = originalFileName || "tsp";
   base = base.replace(/\.[^/.]+$/, "");  // strip extension
   const finalName = base + "_path.csv";
@@ -423,9 +450,12 @@ exportBtn.addEventListener("click", () => {
   URL.revokeObjectURL(url);
 });
 
-// ---------- Init ----------
+// ---------------------------------------------------
+// Init
+// ---------------------------------------------------
 window.addEventListener("resize", resizeCanvasToFrame);
 window.addEventListener("DOMContentLoaded", () => {
   resizeCanvasToFrame();
-  updateControls(); // initial state: no file, no path
+  ensureWorker();
+  updateControls();  // initial state: no file, no path
 });
