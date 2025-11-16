@@ -22,4 +22,4 @@ services:
 
 # build and run: docker compose up --build -d
 
-# kill: docker compose down
+# kill: docker compose down --rmi all
