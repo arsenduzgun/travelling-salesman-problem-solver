@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  tsp-app:
+    build: .
+    container_name: tsp-app
+    ports:
+      - "5000:5000"
+
+    # Bind mounts override the baked code
+    volumes:
+      - ./backend:/app/backend
+      - ./frontend:/app/frontend
+
+    environment:
+      FLASK_ENV: development
+      # FLASK_DEBUG: "1"  # optional
+
+    command: python backend/app.py
+
+
+
+# build and run: docker compose up --build -d
+
+# kill: docker compose down

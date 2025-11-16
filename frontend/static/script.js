@@ -62,7 +62,7 @@ function createTspWorker() {
     return null;
   }
 
-  const worker = new Worker("tsp-worker.js");
+  const worker = new Worker("/static/tsp-worker.js");
 
   worker.onmessage = (e) => {
     stopProcessingAnimation();
@@ -290,7 +290,7 @@ function animatePath(points, pathIndices) {
       isAnimating = false;
       skipBtn.style.display = "none";
       drawScene(points, pathIndices); // final full path
-      showDistance();                 // ✅ show total distance at the end
+      showDistance();                 // show total distance at the end
       updateControls();
     }
   }

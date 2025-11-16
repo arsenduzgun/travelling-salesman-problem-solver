@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# Virtual environments
+venv/
+.env/
+.venv/
+
+# VSCode
+.vscode/
+
+# Docker
+docker-volume/
+docker-data/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Flask instance folder (if used)
+instance/
+
+# Optional cache folders
+.cache/
