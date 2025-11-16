@@ -1,5 +1,3 @@
-"use strict";
-
 // --- DOM elements ---
 const uploadBtn = document.getElementById("upload-btn");
 const fileNameEl = document.getElementById("file-name");
@@ -10,6 +8,7 @@ const visualFrame = document.getElementById("visual-frame");
 const processingLoader = document.getElementById("processing-loader");
 const skipBtn = document.getElementById("skip-btn");
 const exportBtn = document.getElementById("export-btn");
+const distanceTxt = document.getElementById("distance");
 
 // --- Canvas & state ---
 let ctx = null;
@@ -24,7 +23,8 @@ let animPath = null;
 let tspWorker = null;
 let workerRunning = false;
 
-let originalFileName = null; // real uploaded filename
+let originalFileName = null;   // real uploaded filename
+let totalTourDistance = null;  // total tour length returned by worker
 
 // ---------------------------------------------------
 // Control state helper
@@ -38,6 +38,19 @@ function updateControls() {
   uploadBtn.disabled    = workerRunning || isAnimating;
   startStopBtn.disabled = !hasFile      || isAnimating;
   exportBtn.disabled    = isAnimating   || !tspPath;
+}
+
+// ---------------------------------------------------
+// Distance display helpers
+// ---------------------------------------------------
+function showDistance() {
+  if (totalTourDistance == null || Number.isNaN(totalTourDistance)) return;
+  distanceTxt.style.display = "inline-block";
+  distanceTxt.textContent = "Total distance: " + totalTourDistance.toFixed(2);
+}
+
+function hideDistance() {
+  distanceTxt.style.display = "none";
 }
 
 // ---------------------------------------------------
@@ -59,12 +72,15 @@ function createTspWorker() {
     const { path, distance } = e.data || {};
     if (!path || !Array.isArray(path) || path.length === 0) {
       tspPath = null;
+      totalTourDistance = null;
+      hideDistance();
       updateControls();
       alert("No valid path found.");
       return;
     }
 
     tspPath = path;
+    totalTourDistance = (typeof distance === "number" ? distance : null);
     console.log("Total tour distance:", distance?.toFixed?.(2) ?? distance);
 
     // Start animation when worker finishes
@@ -77,6 +93,8 @@ function createTspWorker() {
     startStopBtn.textContent = "Start";
     stopProcessingAnimation();
     tspPath = null;
+    totalTourDistance = null;
+    hideDistance();
     updateControls();
     alert("An error occurred while solving the path.");
   };
@@ -248,6 +266,7 @@ function animatePath(points, pathIndices) {
   if (!points || !pathIndices || pathIndices.length === 0) return;
 
   stopAnimation(); // ensure clean start
+  hideDistance();  // don't show previous result while animating
 
   let edgesToDraw = 0;
   const totalEdges = pathIndices.length;
@@ -271,6 +290,7 @@ function animatePath(points, pathIndices) {
       isAnimating = false;
       skipBtn.style.display = "none";
       drawScene(points, pathIndices); // final full path
+      showDistance();                 // ✅ show total distance at the end
       updateControls();
     }
   }
@@ -288,24 +308,30 @@ skipBtn.addEventListener("click", () => {
     drawScene(animPoints, animPath);
   }
 
+  showDistance();   // ✅ show distance when user skips animation
   updateControls();
 });
 
+// ---------------------------------------------------
+// Processing loader
+// ---------------------------------------------------
 function startProcessingAnimation() {
   processingLoader.style.display = "flex";
+  hideDistance(); // hide any previous distance while processing
 }
 
 function stopProcessingAnimation() {
   processingLoader.style.display = "none";
 }
 
-
 // ---------------------------------------------------
 // File handling
 // ---------------------------------------------------
 function resetStateForNewFile() {
   tspPath = null;
+  totalTourDistance = null;
   stopAnimation();
+  hideDistance();
   clearCanvas();
   updateControls();
 }
@@ -374,6 +400,8 @@ startStopBtn.addEventListener("click", () => {
 
     stopAnimation();
     tspPath = null;
+    totalTourDistance = null;
+    hideDistance();
 
     // Show points for the first time now
     drawScene(locations, null);
@@ -398,6 +426,8 @@ startStopBtn.addEventListener("click", () => {
   }
 
   tspPath = null;
+  totalTourDistance = null;
+  hideDistance();
   clearCanvas();
   updateControls();
 });
