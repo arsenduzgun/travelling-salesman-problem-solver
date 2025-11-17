@@ -22,4 +22,6 @@ services:
 
 # build and run: docker compose up --build -d
 
+# access: http://localhost:5000
+
 # kill: docker compose down --rmi all
