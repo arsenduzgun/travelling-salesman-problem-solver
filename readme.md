@@ -7,6 +7,10 @@ This project visualises and solves the Travelling Salesman Problem (TSP) by comp
 - **Docker**
 - **Git**
 
+## Clone the Project
+
+git clone https://github.com/arsenduzgun/travelling-salesman-problem-solver.git
+
 ## Run the Application
 
 ### Build & Start
